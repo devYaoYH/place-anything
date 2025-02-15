@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles.css">
+    <title>Image Overlay Editor</title>
+    <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <div class="upload-section">
+                <input type="file" id="bgFileElem" accept="image/*" style="display:none;">
+                <button id="bgUploadButton" class="action-button bg-upload">Set Background</button>
+                <input type="file" id="fileElem" multiple accept="image/*" style="display:none;">
+                <button id="uploadButton">Upload Images</button>
+            </div>
+            <div class="thumbnails" id="thumbnailContainer">
+                <!-- Thumbnails will be added here dynamically -->
+            </div>
+            <button id="downloadButton" class="action-button">Download Image</button>
+        </div>
+        <div class="main-content">
+            <canvas id="canvas"></canvas>
+        </div>
+    </div>
+    <script src="script.js"></script>
+    <script src="draggable.js"></script>
+</body>
+</html>
