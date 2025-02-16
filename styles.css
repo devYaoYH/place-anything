@@ -21,6 +21,26 @@ body {
     gap: 15px;
 }
 
+.main-content-wrapper {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.main-content {
+    width: min(calc(100vh - 40px), calc(100% - 40px));
+    height: min(calc(100vh - 40px), calc(100% - 40px));
+    position: relative;
+    background-color: white;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    overflow: hidden;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+}
+
 .upload-section {
     text-align: center;
 }
@@ -66,18 +86,6 @@ body {
     transform: scale(1.05);
 }
 
-.main-content {
-    flex-grow: 1;
-    position: relative;
-    background-color: white;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    overflow: hidden;
-    background-position: center;
-    background-repeat: no-repeat;
-    background-size: contain;
-}
-
 .bg-upload {
     background-color: #9C27B0;
     margin-bottom: 15px;
@@ -100,7 +108,7 @@ canvas {
     touch-action: none;
     user-select: none;
     position: absolute;
-    width: 200px;  
+    width: 200px;
     height: auto;
     cursor: move;
 }
@@ -110,7 +118,7 @@ canvas {
     pointer-events: none;
     width: 100%;
     height: 100%;
-    object-fit: contain;
+    object-fit: fill;
 }
 
 /* Remove button styles */
@@ -186,4 +194,63 @@ canvas {
 /* Hide resize handle during capture */
 .draggable.capturing::after {
     display: none;
+}
+
+.process {
+    background-color: #673AB7;
+    margin-bottom: 10px;
+}
+
+.process:hover {
+    opacity: 0.9;
+}
+
+.control-group {
+    margin-bottom: 15px;
+    width: 100%;
+}
+
+.control-group label {
+    display: block;
+    margin-bottom: 5px;
+    color: #333;
+    font-size: 14px;
+}
+
+.control-group textarea {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    resize: vertical;
+    min-height: 60px;
+}
+
+.control-group input[type="range"] {
+    width: 100%;
+    margin: 8px 0;
+}
+
+#denoisingValue {
+    font-weight: normal;
+    color: #666;
+}
+
+.toggle-label {
+    display: flex !important;
+    align-items: center;
+    cursor: pointer;
+}
+
+.toggle-label input[type="checkbox"] {
+    margin-right: 8px;
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+.toggle-text {
+    font-size: 14px;
+    color: #333;
 }

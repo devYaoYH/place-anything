@@ -20,10 +20,26 @@
             <div class="thumbnails" id="thumbnailContainer">
                 <!-- Thumbnails will be added here dynamically -->
             </div>
+            <div class="control-group">
+                <label for="promptInput">Prompt:</label>
+                <textarea id="promptInput" rows="3" placeholder="Enter your prompt here...">Reimagine this scene with a romantic flair. Add sparkles and glitter.</textarea>
+            </div>
+            <div class="control-group">
+                <label for="denoisingStrength">Denoising Strength: <span id="denoisingValue">0.5</span></label>
+                <input type="range" id="denoisingStrength" min="0" max="1" step="0.05" value="0.5">
+            </div>
+            <div class="control-group">
+                <label class="toggle-label">
+                    <input type="checkbox" id="useMaskToggle" checked>
+                    <span class="toggle-text">Use Mask for Inpainting</span>
+                </label>
+            </div>
+            <button id="processButton" class="action-button process">Process with AI</button>
             <button id="downloadButton" class="action-button">Download Image</button>
         </div>
-        <div class="main-content">
-            <canvas id="canvas"></canvas>
+        <div class="main-content-wrapper">
+            <div class="main-content">
+            </div>
         </div>
     </div>
     <script src="script.js"></script>

@@ -5,8 +5,20 @@ const downloadButton = document.getElementById('downloadButton');
 const mainContent = document.querySelector('.main-content');
 const bgUploadButton = document.getElementById('bgUploadButton');
 const bgFileInput = document.getElementById('bgFileElem');
+const processButton = document.getElementById('processButton');
 
 let imageCounter = 0;
+
+// Initialize controls
+const denoisingSlider = document.getElementById('denoisingStrength');
+const denoisingValue = document.getElementById('denoisingValue');
+const promptInput = document.getElementById('promptInput');
+const useMaskToggle = document.getElementById('useMaskToggle');
+
+// Update denoising value display
+denoisingSlider.addEventListener('input', function() {
+    denoisingValue.textContent = this.value;
+});
 
 // Handle background upload button click
 bgUploadButton.addEventListener('click', () => bgFileInput.click());
@@ -126,25 +138,202 @@ function createDraggableImage(img) {
     mainContent.appendChild(draggableDiv);
 }
 
-// Handle download button click
-downloadButton.addEventListener('click', () => {
+// Function to extract main content with background
+async function extractMainContentAsImage() {
     const mainContent = document.querySelector('.main-content');
-    const removeButtons = mainContent.querySelectorAll('.remove-button');
-    const draggables = mainContent.querySelectorAll('.draggable');
+    return await html2canvas(mainContent);
+}
+
+// Function to extract objects without background
+async function extractObjectsAsImage() {
+    const mainContent = document.querySelector('.main-content');
+    const currentBackground = mainContent.style.backgroundImage;
+    const currentBackgroundColor = mainContent.style.backgroundColor;
+
+    // Remove background temporarily
+    mainContent.style.backgroundImage = 'none';
+    mainContent.style.backgroundColor = 'transparent';
+
+    // Capture without background
+    const canvas = await html2canvas(mainContent, {
+        backgroundColor: null,
+        removeContainer: true
+    });
+
+    // Restore background
+    mainContent.style.backgroundImage = currentBackground;
+    mainContent.style.backgroundColor = currentBackgroundColor;
+
+    return canvas;
+}
+
+// Function to create a binary mask from an image with transparency
+async function createBinaryMaskFromImage(imageData, invert = false) {
+    return new Promise((resolve, reject) => {
+        // Create a temporary image to load the data
+        const img = new Image();
+        
+        img.onload = () => {
+            // Create a canvas of the same size
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d');
+
+            // Draw the image
+            ctx.drawImage(img, 0, 0);
+
+            // Get image data
+            const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const pixels = imgData.data;
+
+            // Process each pixel
+            for (let i = 0; i < pixels.length; i += 4) {
+                const alpha = pixels[i + 3]; // Alpha channel
+                
+                // If pixel is transparent (alpha < 128)
+                const isTransparent = alpha < 128;
+                
+                // Set color based on transparency and invert flag
+                const color = (isTransparent !== invert) ? 0 : 255;
+                
+                // Set RGB channels to black or white
+                pixels[i] = color;     // R
+                pixels[i + 1] = color; // G
+                pixels[i + 2] = color; // B
+                pixels[i + 3] = 255;   // A (fully opaque)
+            }
+
+            // Put the modified pixels back
+            ctx.putImageData(imgData, 0, 0);
+
+            // Resolve with base64 string of the mask
+            resolve(canvas.toDataURL('image/png').split(',')[1]);
+        };
+
+        img.onerror = () => {
+            reject(new Error('Failed to load image'));
+        };
+
+        img.src = `data:image/png;base64,${imageData}`;
+    });
+}
+
+// Function to hide UI elements
+function hideUIElements() {
+    const removeButtons = document.querySelectorAll('.remove-button');
+    const rotateButtons = document.querySelectorAll('.rotate-button');
+    const draggables = document.querySelectorAll('.draggable');
     
-    // Hide UI elements
     removeButtons.forEach(button => button.style.display = 'none');
+    rotateButtons.forEach(button => button.style.display = 'none');
     draggables.forEach(drag => drag.classList.add('capturing'));
     
-    html2canvas(mainContent).then(canvas => {
-        // Create a temporary link element
-        const link = document.createElement('a');
-        link.download = 'bouquet-' + new Date().toISOString().slice(0,10) + '.png';
-        link.href = canvas.toDataURL('image/png');
-        link.click();
+    return { removeButtons, rotateButtons, draggables };
+}
+
+// Function to restore UI elements
+function restoreUIElements(elements) {
+    elements.removeButtons.forEach(button => button.style.display = 'flex');
+    elements.rotateButtons.forEach(button => button.style.display = 'flex');
+    elements.draggables.forEach(drag => drag.classList.remove('capturing'));
+}
+
+// Download button click handler
+document.getElementById('downloadButton').addEventListener('click', async function() {
+    const uiElements = hideUIElements();
+
+    try {
+        // Capture both versions of the image
+        const [canvasWithBg, canvasWithoutBg] = await Promise.all([
+            extractMainContentAsImage(),
+            extractObjectsAsImage()
+        ]);
+
+        // Create download links
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
         
-        // Restore UI elements
-        removeButtons.forEach(button => button.style.display = 'flex');
-        draggables.forEach(drag => drag.classList.remove('capturing'));
-    });
+        // Download with background
+        const linkWithBg = document.createElement('a');
+        linkWithBg.download = `bouquet_${timestamp}.png`;
+        linkWithBg.href = canvasWithBg.toDataURL('image/png');
+        linkWithBg.click();
+
+        // Download without background
+        const linkWithoutBg = document.createElement('a');
+        linkWithoutBg.download = `bouquet_${timestamp}_masked.png`;
+        linkWithoutBg.href = canvasWithoutBg.toDataURL('image/png');
+        linkWithoutBg.click();
+
+    } catch (error) {
+        console.error('Error downloading images:', error);
+        alert('Failed to download images. Please try again.');
+    } finally {
+        restoreUIElements(uiElements);
+    }
+});
+
+// Handle process button click
+processButton.addEventListener('click', async function() {
+    const uiElements = hideUIElements();
+    this.disabled = true;
+    this.textContent = 'Processing...';
+
+    try {
+        // Capture the current state using the extraction function
+        const canvas = await extractMainContentAsImage();
+        const imageData = canvas.toDataURL('image/png').split(',')[1];
+
+        // Prepare request body
+        const requestBody = {
+            prompt: promptInput.value.trim(),
+            denoising_strength: parseFloat(denoisingSlider.value),
+            init_images: [
+                imageData
+            ]
+        };
+
+        // Add mask if toggle is enabled
+        if (useMaskToggle.checked) {
+            const maskCanvas = await extractObjectsAsImage();
+            const maskData = await createBinaryMaskFromImage(
+                maskCanvas.toDataURL('image/png').split(',')[1],
+                true
+            );
+            requestBody.mask = maskData;
+            requestBody.inpainting_fill = 1;
+        }
+
+        let request = {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(requestBody)
+        };
+
+        // Make API call to img2img endpoint through proxy
+        const response = await fetch('http://localhost:3000/proxy/img2img', request);
+
+        if (!response.ok) {
+            console.log(request);
+            throw new Error('Failed to process image');
+        }
+
+        // Get the processed image data
+        const result = await response.json();
+        console.log(result);
+
+        // Set the processed image as the background
+        mainContent.style.backgroundImage = `url(data:image/png;base64,${result.images[0]})`;
+        mainContent.style.backgroundSize = 'cover';
+        mainContent.style.backgroundPosition = 'center';
+    } catch (error) {
+        console.error('Error processing image:', error);
+        alert('Failed to process image. Please try again.');
+    } finally {
+        restoreUIElements(uiElements);
+        this.disabled = false;
+        this.textContent = 'Process with AI';
+    }
 });
