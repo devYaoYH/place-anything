@@ -46,3 +46,7 @@ Merging done in 2 steps:
     - SAM for initial background removal
 - Windsurf IDE for lightning fast development
     - the entire project was completed in ~6hr by a single dev (me!)
+
+# Future Extensions
+
+- Add CnotrolNet support in generation process to better recreate surrounding background scene: https://github.com/lllyasviel/ControlNet
