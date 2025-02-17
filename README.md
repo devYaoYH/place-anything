@@ -2,7 +2,9 @@
 
 Insert objects and position them into scenery before sprinkling some genAI magic to merge them together!
 
-You'll need to start your own server for the AI magic to work though... Automatic1111 webui with `--api` option enabled is what's used here. sd-1.5-inpainting model is used for generation.
+WebUI preview here: https://devyaoyh.github.io/place-anything/
+
+**However, You'll need to start your own server for the AI magic to work though... Automatic1111 webui with `--api` option enabled is what's used here. sd-1.5-inpainting model is used for generation.**
 
 sd-1.5 isn't that great, so the best results appear when the background is rather simple without many details.
 
